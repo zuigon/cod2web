@@ -1,0 +1,50 @@
+table * { font-size: 11px; }
+
+.info, .success, .warning, .error {
+	border: 1px solid;
+	margin: 10px 0px;
+	padding:15px 10px 15px 50px;
+	background-repeat: no-repeat;
+	background-position: 10px center;
+}
+
+.info {
+	color: #00529B;
+	background-color: #BDE5F8;
+	background-image: url('./data/images/info.png');
+}
+
+.success {
+	color: #4F8A10;
+	background-color: #DFF2BF;
+	background-image:url('./data/images/success.png');
+}
+
+.warning {
+	color: #9F6000;
+	background-color: #FEEFB3;
+	background-image: url('./data/images/warning.png');
+}
+
+.error {
+	color: #D8000C;
+	background-color: #FFBABA;
+	background-image: url('./data/images/error.png');
+}
+
+#cms_header {
+	font-size: 12px;
+	font-weight: bold;
+	margin-top: 25px;
+	border-bottom: 1px solid #CCCCCC;
+	width: 300px;
+	margin-bottom: 5px;
+}
+
+.filecontent {
+	background-image: url('./data/images/icon.gif');
+	width: 303px;
+	height: 92px;
+	display: none;
+}
+.filepadding { padding-left: 5px; padding-right: 5px; padding-bottom: 5px; padding-top: 14px; }
