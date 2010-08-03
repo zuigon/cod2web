@@ -1,0 +1,15 @@
+
+- na pocetku, login
+	- users db MySQL
+		- MySQL:
+			- o user-u
+			- owned servers
+			- perms
+- Home screen
+	- odabir servera, nema navbara, osim Logout; za admina drugi linkovi ...
+	- nakon odabiranja popuni navbar; perms (brisanje servera ...)
+
+- servers
+	- ime srv ne smije biti /new/
+
+

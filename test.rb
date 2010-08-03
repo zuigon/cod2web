@@ -53,13 +53,6 @@ DataMapper::setup(:default, {
 
 # DataMapper.auto_migrate!
 
-# def auth?
-#   !request.cookies["uname"].nil? and !request.cookies["passw"].nil? and !request.cookies["authed"].nil? and request.cookies["authed"].to_i == 1
-# end
-# 
-# def admin?
-#   
-# end
 
 def site_title
   "cod2web"
@@ -92,13 +85,66 @@ get '/test' do
   status 404
 end
 
+get '/servers' do
+  haml "
+%ul{:id => 'server_list'}
+  %li{:class => 'on'}
+    item 1
+    %ul
+      %li
+        owner: bkrsta
+      %li
+        status: off
+      %li
+        size: 20
+      %li{:class => 'btns'}
+  %li{:class => 'off'}
+    item 2
+    %ul
+      %li
+        owner: max
+      %li
+        status: off
+      %li
+        size: 20
+      %li{:class => 'btns'}
+        / %input#btn_manage{:type=>'submit', :id=>'btn_manage', :value=>'Manage',  :class=>'btn'}
+        %a{:href=>'', :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
+  %li{:class => 'na'}
+    item 3
+    %ul
+      %li
+        owner: unknown
+      %li
+        status: off
+      %li
+        size: 20
+      %li{:class => 'btns'}
+        %a{:href=>'', :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
+        / %input#shell_textfield{:type=>'text', :class=>'sh_textbar', :size=>'70'}
+        / %input#btn_manage{:type=>'submit', :id=>'btn_manage', :value=>'Manage',  :class=>'btn'}
+"
+end
+
+get '/servers/sync' do
+  # 1. ispisi sve servere u hosting/ koji nisu u bazi
+  #    za svaki novi srv:
+  #      li narancaste boje, check pored svakog, btn import dolje
+  # 2. pokazi one koji su obrisani, a u bazi su
+  #    isto ...
+end
+
+get '/servers/new' do
+  # forma za cr. srv-a
+  # ime ne smije biti new ili sync
+end
+
 # get '/user/add' do
 #   @user = User.create(:uname => params[:username], :passw => (Digest::MD5.hexdigest(params[:password])).to_s, :is_admin => 0, :enabled => 1)
 # end
 
 get '/status' do
   haml :status
-  # "Loggedin var in cookie: #{request.cookies['authed']}"
 end
 
 # TODO: XML list of running servers
@@ -126,6 +172,16 @@ get '/servers.xml' do
   end
 end
 
+# - textarea za logove
+# echo "<br /><center><textarea name='logarea' id='logarea' cols='100' rows='30' readonly='readonly'>";
+# echo ServerCore::ViewLog(SRV_LOG_FILENAME,"");
+# echo "</textarea></center>";
+# echo "<script language='Javasvcript'>logarea.scrollTop = logarea.scrollHeight</script>";
+
+# - btns
+# echo '<input name="shell_textfield" type="text" class="sh_textbar" size="70">';
+# echo '<input name="shell_submit" type="submit" id="shell_submit" value="Execute" class="sh_submitbutton">';
+
 
 __END__
 
@@ -135,9 +191,9 @@ __END__
   %head
     %meta{:content => "text/html; charset=iso-8859-1", "http-equiv" => "Content-Type"}/
     %title= site_title
-    %link{:href => "./css/main.css", :rel => "stylesheet", :type => "text/css"}/
-    %link{:href => "./css/style.css", :rel => "stylesheet", :type => "text/css"}/
-    %script{:src => "./js/main.js", :type => "text/javascript"}
+    %link{:href => "/css/main.css", :rel => "stylesheet", :type => "text/css"}/
+    %link{:href => "/css/style.css", :rel => "stylesheet", :type => "text/css"}/
+    %script{:src => "/js/main.js", :type => "text/javascript"}
   %body
     %div{:align => "center"}
       #container
