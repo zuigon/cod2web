@@ -27,7 +27,7 @@ class Srvinfo
   key :email,       String
   key :port,        Integer, :required => true
   key :rcon,        String
-  key :size,        Integer
+  key :size,        Integer, :required => true
   # key :maps, Array
 
   belongs_to :server
