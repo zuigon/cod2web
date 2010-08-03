@@ -1,13 +1,19 @@
 require "rubygems"
+gem "activesupport", "= 2.3.8"
 require "sinatra"
 # require 'data_mapper'
+gem "haml", "= 3.0.15"
 require "dm-core"
 require 'dm-migrations'
+require "dm-mysql-adapter"
 require 'rack-flash'
 require "sinatra-authentication"
-require "erb"
-# require "haml"
+# require "erb"
 require 'digest/md5'
+require "mongo_mapper"
+require 'sinatra_more/markup_plugin'
+require "sinatra/reloader" if development?
+
 
 set :app_file, __FILE__
 set :root, File.dirname( __FILE__ )
@@ -33,6 +39,11 @@ DataMapper::setup(:default, {
   :database => 'cod2web_dev'
 })
 
+MongoMapper.connection = Mongo::Connection.new('localhost')
+MongoMapper.database = 'cod2web_dev'
+
+require "models"
+
 # class User
 #   include DataMapper::Resource
 # 
@@ -54,10 +65,6 @@ DataMapper::setup(:default, {
 # DataMapper.auto_migrate!
 
 
-def site_title
-  "cod2web"
-end
-
 # layout :layout
 
 helpers do
@@ -74,11 +81,39 @@ helpers do
       haml "_#{name}".to_sym, options.merge(:layout => false)
     end
   end
+
+  def site_title() "cod2web" end
+
+  def running_os
+    raw = `uname`.chop
+    if raw =~ /Darwin/
+      return "Mac OS X"
+    end
+    return raw
+  end
+
+  def loggedin?
+    !!current_user.email
+  end
+
+    # c = request.cookies["manage_server"]
+    # c ||= "NONE"
+    # response.set_cookie("manage_server", c)
+
+  def manage_server
+    # request.cookies["manage_server"].to_s
+    request.cookies["manage_server"]
+  end
+  def managing?
+    !request.cookies["manage_server"].nil? && request.cookies["manage_server"] != "NONE" && !request.cookies["manage_server"].empty?
+  end
 end
 
 get '/' do
   login_required
-	haml :index
+  # haml :index
+  # TODO: Home == Dashboard sa stats, srvs, news, ...
+  redirect '/servers'
 end
 
 get '/test' do
@@ -86,47 +121,79 @@ get '/test' do
 end
 
 get '/servers' do
-  haml "
-%ul{:id => 'server_list'}
-  %li{:class => 'on'}
-    item 1
-    %ul
-      %li
-        owner: bkrsta
-      %li
-        status: off
-      %li
-        size: 20
-      %li{:class => 'btns'}
-  %li{:class => 'off'}
-    item 2
-    %ul
-      %li
-        owner: max
-      %li
-        status: off
-      %li
-        size: 20
-      %li{:class => 'btns'}
-        / %input#btn_manage{:type=>'submit', :id=>'btn_manage', :value=>'Manage',  :class=>'btn'}
-        %a{:href=>'', :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
-  %li{:class => 'na'}
-    item 3
-    %ul
-      %li
-        owner: unknown
-      %li
-        status: off
-      %li
-        size: 20
-      %li{:class => 'btns'}
-        %a{:href=>'', :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
-        / %input#shell_textfield{:type=>'text', :class=>'sh_textbar', :size=>'70'}
-        / %input#btn_manage{:type=>'submit', :id=>'btn_manage', :value=>'Manage',  :class=>'btn'}
-"
+  login_required
+  @servers = [
+    {"name"=>"srv1",  "owner"=>"bkrsta", "status"=>0,  "size"=>20},
+    {"name"=>"test1", "owner"=>"john",   "status"=>1,  "size"=>20},
+    {"name"=>"test2", "owner"=>"steve",  "status"=>1,  "size"=>16},
+    {"name"=>"test3", "owner"=>"bkrsta", "status"=>0,  "size"=>16},
+    {"name"=>"test4", "owner"=>"bkrsta", "status"=>-1, "size"=>32}
+  ]
+  # filder servers (status)
+  @servers.collect! do |s|
+    s["status"] = case s["status"]
+    when 0: "off"
+    when 1: "on"
+    when -1: "unknown"
+    else "err"
+    end; s
+  end
+
+
+  haml <<EOS
+- if managing?
+  Managing:
+  = manage_server
+- else
+  Not managing ...
+  = manage_server
+  = request.cookies["manage_server"]
+
+/ %ul{:id => 'server_list'}
+/   %li{:class => 'on'}
+/     item 1
+/     %ul
+/       %li
+/         owner: bkrsta
+/       %li
+/         status: off
+/       %li
+/         size: 20
+/       %li{:class => 'btns'}
+/   %li{:class => 'off'}
+/     item 2
+/     %ul
+/       %li
+/         owner: max
+/       %li
+/         status: off
+/       %li
+/         size: 20
+/       %li{:class => 'btns'}
+/         / %input#btn_manage{:type=>'submit', :id=>'btn_manage', :value=>'Manage',  :class=>'btn'}
+/         %a{:href=>'', :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
+/   %li{:class => 'na'}
+/     item 3
+/     %ul
+/       %li
+/         owner: unknown
+/       %li
+/         status: off
+/       %li
+/         size: 20
+/       %li{:class => 'btns'}
+/         %a{:href=>'', :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
+/         / %input#shell_textfield{:type=>'text', :class=>'sh_textbar', :size=>'70'}
+/         / %input#btn_manage{:type=>'submit', :id=>'btn_manage', :value=>'Manage',  :class=>'btn'}
+
+%ul#server_list
+  - for srv in @servers
+    = partial("server", :locals => {:srv=>srv})
+EOS
 end
 
 get '/servers/sync' do
+  login_required
   # 1. ispisi sve servere u hosting/ koji nisu u bazi
   #    za svaki novi srv:
   #      li narancaste boje, check pored svakog, btn import dolje
@@ -134,7 +201,40 @@ get '/servers/sync' do
   #    isto ...
 end
 
+get '/test2' do
+  login_required
+  response.set_cookie("test2", "test2")
+  request.cookies["test2"]
+end
+
+# get '/manage/:owner-:name' do
+get %r{/manage/([\w]+)-([\w]+)\.json} do |owner, name|
+  # login_required
+  # c = "#{owner}-#{name}"
+  # response.set_cookie("manage_server", { :value => c,
+  #   # :expires => 30.minutes.from_now,
+  # })
+  # request.cookies["manage_server"]
+
+  layout false
+
+  if !@servers.exist?
+    return '{"status":"error"}'
+  end
+  if loggedin?
+    if @user.owns_server(name)
+      return '{"status":"ok"}'
+    else
+      return '{"status":"error"}'
+    end
+  else
+    return '{"status":"not_logged_in"}'
+  end
+
+end
+
 get '/servers/new' do
+  login_required
   # forma za cr. srv-a
   # ime ne smije biti new ili sync
 end
@@ -186,13 +286,15 @@ end
 __END__
 
 @@layout
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"\>
+!!! Transitional
 %html{:xmlns => "http://www.w3.org/1999/xhtml"}
   %head
     %meta{:content => "text/html; charset=iso-8859-1", "http-equiv" => "Content-Type"}/
     %title= site_title
     %link{:href => "/css/main.css", :rel => "stylesheet", :type => "text/css"}/
     %link{:href => "/css/style.css", :rel => "stylesheet", :type => "text/css"}/
+    %script{:src => "http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js", :type => "text/javascript"}
+    %script{:src => "http://plugins.jquery.com/files/jquery.cookie.js.txt", :type => "text/javascript"}
     %script{:src => "/js/main.js", :type => "text/javascript"}
   %body
     %div{:align => "center"}
@@ -200,12 +302,16 @@ __END__
         %div{:align => "left"}
           #headerimg
             #header2
-              .title3
-                = site_title
+              .title3= site_title
           #navagain
             #navbar
-              - if current_user.email
-                = partial("navbar")
+              - if loggedin?
+                = partial("navbar_all")
+              - if managing?
+                = partial("navbar_manage")
+              - if loggedin?
+                %a{:href => "/logout"}
+                  Logout
           #stuff
             #content
               :css
@@ -213,9 +319,9 @@ __END__
               = yield
           #footer
             %div{:align => "center"}
-              OS: #{`uname`.chop} | Ruby: #{RUBY_VERSION} | Sinatra: #{Sinatra::VERSION} | CoD2: 1.3 | Running servers: #{"0"}
+              OS: #{running_os} | Ruby: #{RUBY_VERSION} | Sinatra: #{Sinatra::VERSION} | CoD2: 1.3 | Running servers: #{"0"}
 
-@@index
+@@login_old
 %form{:action => "/login", :method => "post", :name => "form1"}
   %div{:align => "center", :style => "font-family: 'Segoe UI', 'Verdana';"}
     %br/
@@ -238,19 +344,28 @@ __END__
           %input#btnlogin{:name => "btnlogin", :type => "submit", :value => "Login"}/
 
 @@status
-- if current_user.email
+- if loggedin?
   = "Logged in, #{current_user.email}"
+  %p= manage_server
+  %p= request.cookies["manage_server"]
 - else
   = "Not logged in ..."
   %a{:href=>"/"}
     Login
+%ul
+  - response.set_cookie("manage_server", "bkrsta-srv1")
+  - for c in request.cookies
+    %li
+      %p= c[0]
+      %p= c[1]
 
-@@_navbar
+@@_navbar_all
 %a{:href => "/"}
-  Home
+  Home (servers)
 - if current_user.admin?
-  %a{:href => "/servers"}
-    Server log
+  /
+
+@@_navbar_manage
 %a{:href => "/srvlog"}
   Server log
 %a{:href => "/files"}
@@ -261,6 +376,21 @@ __END__
   Server Stats
 %a{:href => "/rcon"}
   RCON
-%a{:href => "/logout"}
-  Logout
 
+@@_server
+/ %li{:class => srv['status']}
+- ovajm = manage_server=="#{srv['owner']}-#{srv['name']}"
+%li{:class => srv['status'] + (ovajm ? " managed" : "")}
+  = srv['name']
+  %ul
+    %li= "owner: " + srv['owner'].to_s
+    %li
+      = "status: #{srv['status']}"
+    %li
+      = "size: #{srv['size']}"
+    %li{:class => 'btns'}
+      / %a{:href=>"/manage/#{srv['owner']}-#{srv['name']}", :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage
+      - if ovajm
+        %a{:href=>"#", :onclick => "manage('none')", :id=>'btn_manage', :value=>'Close', :class=>'btn_a'} Close
+      - else
+        %a{:href=>"#", :onclick => "manage('#{srv['owner']}-#{srv['name']}')", :id=>'btn_manage', :value=>'Manage', :class=>'btn_a'} Manage

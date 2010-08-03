@@ -1,4 +1,7 @@
-/* @override http://192.168.1.250:9393/css/style.css */
+/* @override 
+	http://192.168.1.250:9393/css/style.css
+	http://localhost:9393/css/style.css
+*/
 
 /* @group reset */
 html, body, div, span, applet, object, iframe,
@@ -42,6 +45,10 @@ table {
 #stuff
 {
 	padding: 10px;
+}
+
+p {
+	margin: 5px;
 }
 
 /* @group Header */
@@ -153,47 +160,6 @@ li {
 	display: block;
 }
 
-#server_list li{
-	height: 35px;
-	font-size: 15px;
-}
-
-#server_list li.on {
-	background-color: #a2ff28;
-}
-#server_list li.off {
-	background-color: #fd0217;
-}
-#server_list li.na {
-	background-color: #52a7fc;
-}
-
-#server_list li ul li {
-	display: inline-block;
-	padding: 0 8px 0 0;
-	border-style: none;
-	background: transparent;
-	font-size: 12px;
-}
-
-#server_list li ul {
-	height: 25px;
-	padding-left: 30px;
-}
-
-#server_list li li.btns {
-	display: inline;
-	position: relative;
-	float: right;
-	top: -10px;
-}
-
-#btn_manage {
-	font-size: 16px;
-	padding: 5px;
-	background-color: #faff2d;
-}
-
 
 /* @end */
 
@@ -232,7 +198,53 @@ li {
 }
 
 
+/* @end */
 
+/* @group server_list */
+#server_list li{
+	height: 35px;
+	font-size: 15px;
+}
+
+#server_list li.on {
+	background-color: #a2ff28;
+}
+#server_list li.off {
+	background-color: #fd0217;
+}
+#server_list li.unknown {
+	background-color: #52a7fc;
+}
+
+#server_list li ul li {
+	display: inline-block;
+	padding: 0 8px 0 0;
+	border-style: none;
+	background: transparent;
+	font-size: 12px;
+}
+
+#server_list li ul {
+	height: 25px;
+	padding-left: 30px;
+}
+
+#server_list li li.btns {
+	display: inline;
+	position: relative;
+	float: right;
+	top: -10px;
+}
+
+#btn_manage {
+	font-size: 16px;
+	padding: 5px;
+	background-color: #faff2d;
+}
+#server_list li.managed {
+	border-width: 3px;
+	border-color: #7fd4fd;
+}
 /* @end */
 
 /* @group Footer */
