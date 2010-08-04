@@ -123,7 +123,7 @@ helpers do
     puts "[#{text}] #{Time.now-b} sec."
   end
   def valid_name?(name)
-    !%w(new list).include? name and name.length >= 3 and name =~ /[a-zA-Z0-9_]/
+    !%w(new list sync add).include? name and name.length >= 3 and name =~ /[a-zA-Z0-9_]/
   end
 end
 
