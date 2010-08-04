@@ -17,7 +17,6 @@ class Server
   key :name,        String, :required => true # shortname, dirname
   key :longname,    String, :required => true
   key :enabled,     Integer, :required => true
-  # key :running,     Boolean
   timestamps!
 
   belongs_to :coduser
@@ -31,7 +30,6 @@ class Server
     else "err"
     end
   end
-
 end
 
 class Srvinfo
@@ -42,7 +40,6 @@ class Srvinfo
   key :port,        Integer, :required => true
   key :rcon,        String
   key :size,        Integer, :required => true
-  # key :maps, Array
 
   belongs_to :server
 end
