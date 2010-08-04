@@ -94,7 +94,7 @@ helpers do
 
   def admin?()
     if !current_user.nil?
-      current_user.admin?
+      return current_user.admin?
     end
     false
   end
