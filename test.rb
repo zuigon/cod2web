@@ -139,7 +139,7 @@ helpers do
   def reqadmin
     login_required
     if !admin?
-      throw(:halt, [404, haml(:error404, :layout=>false)])
+      halt 404, haml(:error404, :layout=>false)
     end
   end
 end
@@ -191,13 +191,6 @@ end
 
 get '/servers/sync' do
   login_required
-  # 1. ispisi sve servere u hosting/ koji nisu u bazi
-  #    za svaki novi srv:
-  #      li narancaste boje, check pored svakog, btn import dolje
-  # 2. pokazi one koji su obrisani, a u bazi su
-  #    isto ...
-
-  # require "fileutils"
 
   servers = Server.all
   @servers_disk = []
@@ -219,8 +212,35 @@ get '/servers/sync' do
 end
 
 post '/servers/sync' do
-  
-  del_db
+  reqadmin
+
+  @to_db  = params[:to_db] || []
+  @del_db = params[:del_db] || []
+
+  deleted = 0
+
+  # Del DB:
+  @del_db.each do |s|
+    # if name =~ /./ and owner =~ /./
+      owner, name = s.split '-'
+      server = Server.all :name=>name
+      if !server.nil?
+        if owner.empty?
+          server.srvinfo.delete
+          server.delete
+        else
+          server.delete if server.coduser.username == owner
+        end
+        deleted+=1
+      end
+    # end
+  end
+  flash[:notice] = "#{deleted} servers removed from DB!"
+  redirect '/servers/sync'
+
+  # Add to DB:
+  # TODO: implem. /servers/sync add to db
+
 end
 
 
@@ -514,9 +534,13 @@ __END__
   %p.notice= flash[:error]
 - if flash[:notice]
   %p.notice= flash[:notice]
-%ul#server_list
-  - for srv in @servers
-    = partial("server", :locals => {:srv=>srv})
+- if !@servers.empty?
+  %ul#server_list
+    - for srv in @servers
+      = partial("server", :locals => {:srv=>srv})
+- else
+  %li
+    There are currently no servers managed by you.
 %a{:href=>"/servers/new", :onclick => "srv_novi()", :id=>'btn_novi_srv', :class=>'button'} New server
 
 @@_server
@@ -570,7 +594,7 @@ __END__
         %h2 U bazi nedostaju:
         - for s in za_db
           %li
-            %input(type='checkbox' name="to_db" value="#{s[0]}" checked='yes')
+            %input(type='checkbox' name="to_db[]" value="#{s[0]}" checked='yes')
             = s[0]
             %b= s[1]
     - del_db = @servers_db - @servers_disk
@@ -578,10 +602,10 @@ __END__
       %h2 Za obrisati iz baze:
       - for s in del_db
         %li
-          %input(type='checkbox' name="del_db" value="#{s[0]}" checked='no')
+          %input(type='checkbox' name="del_db[]" value="#{s[0]}" checked='no')
           = s[0]
           %b= s[1]
-    %input(type='submit' name="btn_sync" value='Sync!' class='button')
+    %input(type='submit' name="btn_sync" value='Sync!' onclick='return confirm("Are you sure?");' class='button')
 
 @@new_srv
 %form(action='/servers/new' method='POST')
@@ -616,4 +640,5 @@ __END__
       %input(type='submit' name="btn_create" value='Create!')
 
 @@error404
-404 ...
+  %p.error
+    Not found!
