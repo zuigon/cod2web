@@ -556,7 +556,7 @@ __END__
         %h2 U bazi nedostaju:
         - for s in za_db
           %li
-            %input(type='checkbox' name="to_db" value=s checked='yes')
+            %input(type='checkbox' name="to_db" value=s[0] checked='yes')
             = s[0]
             %b= s[1]
     - del_db = @servers_db - @servers_disk
@@ -564,7 +564,7 @@ __END__
       %h2 Za obrisati iz baze:
       - for s in del_db
         %li
-          %input(type='checkbox' name="del_db" value=s checked='no')
+          %input(type='checkbox' name="del_db" value=s[0] checked='no')
           = s[0]
           %b= s[1]
     %input(type='submit' name="btn_sync" value='Sync!' class='button')
