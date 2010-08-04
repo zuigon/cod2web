@@ -473,14 +473,16 @@ __END__
   Home (servers)
 
 @@_navbar_admin
-%a{:href => '/sync', :alt => "Sinkroniziranje pravih servera s bazom"}
-  Sync srvs
+%a{:href => '/servers/sync', :alt => "Sinkroniziranje pravih servera s bazom"}
+  +Sync servers
+
+@@_navbar_admin_manage
 
 @@_navbar_manage
 %a{:href => "/srvlog"}
   Server log
-%a{:href => "/files"}
-  File Manager
+%a{:href => "/mods"}
+  Mods (upload)
 %a{:href => "/config"}
   Server Config Editor
 %a{:href => "/stats"}
@@ -517,9 +519,13 @@ __END__
     %div{:class => 'btns'}
       - if ovajm
         - if srv['enabled'] == 1
-          %a{:href=>"#", :onclick => "srv_stop('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Stop
+          / %a{:href=>"#", :onclick => "srv_stop('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Stop
+          %a{:href=>"/servers/stop", :id=>'btn_manage', :class=>'button'} Stop
+          / %a{:href=>"#", :onclick => "srv_restart('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Restart
+          %a{:href=>"/servers/restart", :id=>'btn_manage', :class=>'button'} Restart
         - if srv['enabled'] == 0
-          %a{:href=>"#", :onclick => "srv_start()", :id=>'btn_manage', :class=>'button'} Start
+          / %a{:href=>"#", :onclick => "srv_start('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Start
+          %a{:href=>"/servers/restart", :id=>'btn_manage', :class=>'button'} Start
         %a{:href=>"#", :onclick => "srv_manage('none')", :id=>'btn_manage', :class=>'button'} Close
       - else
         %a{:href=>"#", :onclick => "srv_manage('#{srv['owner']}-#{srv['name']}')", :id=>'btn_manage', :class=>'button'} Manage
@@ -539,17 +545,21 @@ __END__
       %li
         = s[0]
         %b= s[1]
-    %p
-      %h2 U bazi nedostaju:
-      - for s in @servers_disk - @servers_db
+    - za_db = @servers_disk - @servers_db
+    - if za_db != []
+      %p
+        %h2 U bazi nedostaju:
+        - for s in za_db
+          %li
+            %input(type='checkbox' name="to_db" value=s checked='yes')
+            = s[0]
+            %b= s[1]
+    - del_db = @servers_db - @servers_disk
+    - if !del_db.empty?
+      %h2 Za obrisati iz baze:
+      - for s in del_in_db
         %li
-          %input(type='checkbox' name="to_db" value=s checked='yes')
-          = s[0]
-          %b= s[1]
-      %h2 U folderu nedostaju:
-      - for s in @servers_db - @servers_disk
-        %li
-          %input(type='checkbox' name="to_disk" value=s checked='no')
+          %input(type='checkbox' name="del_db" value=s checked='no')
           = s[0]
           %b= s[1]
     %input(type='submit' name="btn_sync" value='Sync!' class='button')
