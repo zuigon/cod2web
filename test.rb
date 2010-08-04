@@ -1,7 +1,6 @@
 require "rubygems"
 gem "activesupport", "= 2.3.8"
 require "sinatra"
-# require 'data_mapper'
 gem "haml", "= 3.0.15"
 # require "dm-core"
 # require 'dm-migrations'
@@ -12,7 +11,6 @@ require 'digest/sha1'
 require 'rack-flash'
 require "models"
 require "sinatra-authentication"
-# require "erb"
 # require 'sinatra_more/markup_plugin'
 # require "sinatra/reloader" if development?
 
