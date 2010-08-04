@@ -263,6 +263,29 @@ get %r{/stop/([\w]+)-([\w]+)} do |owner, name|
   redirect '/servers'
 end
 
+get %r{/servers/restart/([\w]+)-([\w]+)} do |owner, name|
+  user = Coduser.find_by_username owner
+  server = user.servers.find_by_name name
+
+  @output = `cd #{hosting_dir} && ./control #{owner}-#{name} restart`
+
+  @output = @output.split("\n")
+  @output = @output[1..@output.count].join "\n"
+
+  if @output =~ /has started with/
+    flash[:notice] = "Server is restarted"
+    server.enabled = 1
+  elsif @output =~ /is not running/
+    flash[:error] = "Server is not running!"
+    server.enabled = 0
+  else
+    flash[:error] = "Unknown error!"
+    server.enabled = -1
+  end
+
+  redirect '/servers'
+end
+
 get '/stats' do
   # grafovi, players
 end
