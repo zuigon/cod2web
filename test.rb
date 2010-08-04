@@ -412,6 +412,8 @@ __END__
               - if admin?
                 = partial "navbar_admin"
               - if managing?
+                - if admin?
+                  = partial "navbar_admin_manage"
                 = partial "navbar_manage"
               - if logged_in?
                 %a{:href => "/logout"}
