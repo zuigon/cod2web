@@ -19,12 +19,12 @@ function srv_manage(str){
 	return false;
 }
 
-function srv_novi(){
-	// forma za novi server
-}
-
-function srv_start(){
-}
-
-function srv_stop(){
-}
+// TODO: AJAX
+// function srv_novi(){
+// }
+// 
+// function srv_start(){
+// }
+// 
+// function srv_stop(){
+// }

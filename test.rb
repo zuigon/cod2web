@@ -31,40 +31,6 @@ set :sinatra_authentication_view_path, Pathname(__FILE__).dirname.expand_path + 
 
 set :views, File.dirname(__FILE__) + '/views'
 
-# class DmUser
-#   property :name, String
-#   property :enabled, Boolean, :default => true
-# end
-
-# DataMapper::setup(:default, {
-#   :adapter  => 'mysql',
-#   :host     => '192.168.1.250',
-#   :username => 'root',
-#   :password => 'bkrsta',
-#   :database => 'cod2web_dev'
-# })
-
-# class User
-#   include DataMapper::Resource
-# 
-#   property :id,         Serial
-#   property :uname,      String
-#   property :passw,      String
-#   property :is_admin,   Boolean
-#   property :enabled,    Boolean
-#   # property :last_login, DateTime
-# 
-#   validates_presence_of :uname
-#   validates_presence_of :passw
-# 
-#   def check
-#     
-#   end
-# end
-
-# DataMapper.auto_migrate!
-
-
 # layout :layout
 
 before do
