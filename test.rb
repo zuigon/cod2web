@@ -67,6 +67,18 @@ set :views, File.dirname(__FILE__) + '/views'
 
 # layout :layout
 
+before do
+  if logged_in?
+    if (@user = Coduser.all :email=>current_user.email) == nil
+      halt 404, "Trenutni user nije u Coduser"
+    else
+      puts " Trenutni User nije u Coduser!"
+      # user = Coduser.new :name=>
+      puts " dodao sam ga u Coduser"
+    end
+  end
+end
+
 helpers do
   def partial(name, options = {})
     item_name = name.to_sym
