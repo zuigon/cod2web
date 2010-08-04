@@ -81,9 +81,7 @@ helpers do
       haml "_#{name}".to_sym, options.merge(:layout => false)
     end
   end
-
   def site_title() "cod2web" end
-
   def running_os
     raw = `uname`.chop
     if raw =~ /Darwin/
@@ -91,7 +89,6 @@ helpers do
     end
     return raw
   end
-
   def admin?()
     if !current_user.nil?
       return current_user.admin?
@@ -133,8 +130,6 @@ helpers do
       throw(:halt, [404, haml(:error404, :layout=>false)])
     end
   end
-
-
 end
 
 get '/' do
