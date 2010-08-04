@@ -9,8 +9,8 @@ require "mongo_mapper"
 require 'digest/md5'
 require 'digest/sha1'
 require 'rack-flash'
-require "models"
 require "sinatra-authentication"
+require "models"
 # require 'sinatra_more/markup_plugin'
 # require "sinatra/reloader" if development?
 
