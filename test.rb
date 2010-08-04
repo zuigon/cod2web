@@ -31,6 +31,27 @@ set :sinatra_authentication_view_path, Pathname(__FILE__).dirname.expand_path + 
 
 set :views, File.dirname(__FILE__) + '/views'
 
+class S
+  # helper za servere (prave)
+
+  def self.start s
+    `cd #{hosting_dir} && ./control #{s} start`
+  end
+
+  def self.stop s
+    `cd #{hosting_dir} && ./control #{s} stop`
+  end
+
+  def self.restart s
+    `cd #{hosting_dir} && ./control #{s} restart`
+  end
+
+  def self.status s
+    `cd #{hosting_dir} && ./control #{s} status`
+  end
+
+end
+
 # layout :layout
 
 before do
@@ -134,9 +155,9 @@ get '/servers' do
   @servers = []
   servers.each do |s|
     n = {}
-    beginning = Time.now
-    output = `cd #{hosting_dir} && ./control #{@user.username}-#{s.name} status`
-    puts "[/servers, get server status, #{s.name}] output: #{Time.now - beginning} sec."
+    # beginning = Time.now
+    output = S.status "#{@user.username}-#{s.name}"
+    # puts "[/servers, get server status, #{s.name}] output: #{Time.now - beginning} sec."
     n["enabled"] = if output =~ /is not running/; 0
     elsif output =~ /is running/; 1
     else -1
@@ -233,7 +254,7 @@ get %r{/servers/start/([\w]+)-([\w]+)} do |owner, name|
   user = Coduser.all :username=>owner
   server = user.servers.all :name=>name
 
-  @output = `cd #{hosting_dir} && ./control #{owner}-#{name} start`
+  @output = S.start "#{owner}-#{name}"
 
   if @output =~ /has started/ # started
     flash[:notice] = "Server is started"
@@ -253,7 +274,7 @@ get %r{/servers/stop/([\w]+)-([\w]+)} do |owner, name|
   user = Coduser.all :username=>owner
   server = user.servers.all :name=>name
 
-  @output = `cd #{hosting_dir} && ./control #{owner}-#{name} stop`
+  @output = S.start "#{owner}-#{name}"
 
   if @output =~ /Stop COD2 server/ # started
     flash[:notice] = "Server is stopped"
@@ -273,7 +294,7 @@ get %r{/servers/restart/([\w]+)-([\w]+)} do |owner, name|
   user = Coduser.all :username=>owner
   server = user.servers.all :name=>name
 
-  @output = `cd #{hosting_dir} && ./control #{owner}-#{name} restart`
+  @output = S.restart "#{owner}-#{name}"
 
   @output = @output.split("\n")
   @output = @output[1..@output.count].join "\n"
