@@ -92,10 +92,6 @@ helpers do
     return raw
   end
 
-  # c = request.cookies["manage_server"]
-  # c ||= "NONE"
-  # response.set_cookie("manage_server", c)
-
   def admin?()
     if !current_user.nil?
       current_user.admin?
