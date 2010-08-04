@@ -194,14 +194,13 @@ get '/servers/sync' do
 
   @servers_db = []
   servers.each do |s|
-    @servers_db << "#{s.coduser.username}-#{s.name}"
+    @servers_db << ["#{s.coduser.username}-#{s.name}", s.longname]
   end
 
   Dir["#{hosting_dir}/*-*"].each do |d|
     d = d.gsub /.*\//, ''
-
     if File.exist? "#{hosting_dir}/#{d}/.cod2server"
-      @servers_disk << d
+      @servers_disk << [d, `cd #{hosting_dir}/#{d}/ && grep SERVER_NAME vars.txt | sed 's:.*=::g' | sed "s:'::g"`]
     end
     # output = `cd #{hosting_dir} && ./control #{@user.username}-#{s.name} status`
   end
@@ -278,77 +277,43 @@ get '/servers/new' do
   # ime ne smije biti new ili sync
 
   @owners = Coduser.all.collect {|x| x.name }
-
-  @data = {"name"=>"newsrv1", "longname"=>"New srv 1", "owner"=>"bkrsta"}
-
-  haml <<EOF
-%form(action='/servers/new' method='POST')
-  :css
-    ul.new_srv li p.input { left: 100px; }
-  %ul.new_srv
-    %li
-      Name:
-      %p.input
-        %input{"type"=>'text', "name"=>"name", "value"=>@data['name']}
-    %li
-      Longname:
-      %p.input
-        %input{"type"=>'text', "name"=>"longname", "value"=>@data['longname']}
-    %li
-      Enabled:
-      %p.input
-        %input{"type"=>'checkbox', "name"=>"enabled", "value"=>'enabled', "checked"=>'no'}
-    %li
-      Owner:
-      %p.input
-        %select{:name => "owner"}
-          - for owner in @owners
-            %option{ :selected => owner == @data['owner']}= owner
-    %li
-      %input(type='submit' name="btn_create" value='Create!')
-EOF
-
+  @data = {"name"=>"newsrv1", "longname"=>"New srv 1", "owner"=>"bkrsta", "ports"=>[28962,28963,28964,28965,28966]}
+  haml :new_srv
 end
 
 post '/servers/new' do
 
-  name, longname, enabled, owner = params[:name], params[:longname], params[:enabled], params[:owner]
+  name, longname, enabled, owner, port = params[:name], params[:longname], params[:enabled], params[:owner], params[:port]
+
+  user = Coduser.find_by_username owner
 
   if !name.empty? and !longname.empty? and !owner.empty? and valid_name? name
     server = Server.create :name => name, :longname => longname, :enabled => (enabled)?1:0
     server.coduser = Coduser.find_by_username owner
     server.coduser.save
+
+    tmpfile = ("#{hosting_dir}/tmp/temp_input")
+    tmpfile = nil if tmpfile.start_with? "/tmp/"
+    File.open(tmpfile, 'w'){|f|
+      f.puts "" # run as user (unix)
+      f.puts "#{user.name}" # server admin name
+      f.puts "nospam_#{user.email}" # admin email
+      f.puts longname # server name
+      f.puts port
+      f.puts "" # generated RCON pw
+      f.puts "" # max players
+    }
+
+    output = `cd #{hosting_dir} && ruby create.rb -o #{owner} -n #{name} < #{tmpfile}`
+
     server.save
+
     flash[:notice] = "Server created!"
     haml "%p.error= flash[:notice]"
   else
+    @owners = Coduser.all.collect {|x| x.name }
     @data = {"name"=>params[:name], "longname"=>params[:longname], "owner"=>params[:owner]}
-    haml <<EOF
-%form(action='/servers/new' method='POST')
-  :css
-    ul.new_srv li p.input { left: 100px; }
-  %ul.new_srv
-    %li
-      Name:
-      %p.input
-        %input{"type"=>'text', "name"=>"name", "value"=>@data['name']}
-    %li
-      Longname:
-      %p.input
-        %input{"type"=>'text', "name"=>"longname", "value"=>@data['longname']}
-    %li
-      Enabled:
-      %p.input
-        %input{"type"=>'checkbox', "name"=>"enabled", "value"=>'enabled', "checked"=>'no'}
-    %li
-      Owner:
-      %p.input
-        %select{:name => "owner"}
-          - for owner in @owners
-            %option{ :selected => owner == @data['owner']}= owner
-    %li
-      %input(type='submit' name="btn_create" value='Create!')
-EOF
+    haml :new_srv
   end
 end
 
@@ -544,21 +509,58 @@ __END__
     %p
       %h2 DB servers:
     - for s in @servers_db
-      %li= s
+      %li
+        = s[0]
+        %b= s[1]
     %p
       %h2 disk servers:
     - for s in @servers_disk
-      %li= s
+      %li
+        = s[0]
+        %b= s[1]
     %p
       %h2 U bazi nedostaju:
       - for s in @servers_disk - @servers_db
         %li
           %input(type='checkbox' name="to_db" value=s checked='yes')
-          =s
+          = s[0]
+          %b= s[1]
       %h2 U folderu nedostaju:
       - for s in @servers_db - @servers_disk
         %li
           %input(type='checkbox' name="to_disk" value=s checked='no')
-          =s
+          = s[0]
+          %b= s[1]
     %input(type='submit' name="btn_sync" value='Sync!' class='button')
 
+@@new_srv
+%form(action='/servers/new' method='POST')
+  :css
+    ul.new_srv li p.input { left: 100px; }
+  %ul.new_srv
+    %li
+      Name:
+      %p.input
+        %input{"type"=>'text', "name"=>"name", "value"=>@data['name']}
+    %li
+      Longname:
+      %p.input
+        %input{"type"=>'text', "name"=>"longname", "value"=>@data['longname']}
+    %li
+      Enabled:
+      %p.input
+        %input{"type"=>'checkbox', "name"=>"enabled", "value"=>'enabled', "checked"=>'no'}
+    %li
+      Owner:
+      %p.input
+        %select{:name => "owner"}
+          - for owner in @owners
+            %option{ :selected => owner == @data['owner']}= owner
+    %li
+      Port:
+      %p.input
+        %select{:name => "port"}
+          - for port in @data['ports']
+            %option= port
+    %li
+      %input(type='submit' name="btn_create" value='Create!')
