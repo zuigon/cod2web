@@ -102,7 +102,9 @@ helpers do
   def managing?()
     !request.cookies["manage_server"].nil? && request.cookies["manage_server"] != "NONE" && !request.cookies["manage_server"].empty?
   end
-  def link_to(text, url) "<a href='#{url}'>#{text}</a>" end
+  def link_to(text, url)
+    "<a href='#{url}'>#{text}</a>"
+  end
   def login_required
     if current_user.class != GuestUser and !current_user.nil?;
       return true
