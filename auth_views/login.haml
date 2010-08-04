@@ -1,3 +1,5 @@
+- redirect '/' if logged_in? and !session[:show_login]
+- session[:show_login] = nil if session[:show_login]
 #sinatra_authentication
   %center
     #sinatra_authentication_flash= flash[:notice]

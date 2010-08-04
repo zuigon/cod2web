@@ -129,7 +129,7 @@ p {
 	padding-bottom: 10px;
 	text-decoration: none;
 	color: #000000;
-	border-bottom: 0px;
+	/*border-bottom: 0px;*/
 }	
 
 #navbar a:hover
@@ -144,7 +144,7 @@ p {
 	color: #333333;
 	background-image: url(/images/on.png);
 	margin-bottom: -1px;
-	border-bottom: 0px;
+	/*border-bottom: 0px;*/
 }
 
 #navbar a {
@@ -172,35 +172,37 @@ li {
 	margin-right: 5px;
 }	
 
-#content a:link, a:active
+/*#content a:link, a:active
 {
 	border-bottom: 1px dotted #CCCCCC;
 	color: #333333;
 	text-decoration: none;
 	margin-bottom: -1px;
-}	
+}*/	
 
-#content a:visited
+/*#content a:visited
 {
 	border-bottom: 1px dotted #CCCCCC;
 	color: #333333;
 	text-decoration: none;
 	margin-bottom: -1px;
-}	
+}*/	
 
-#content a:hover
+/*#content a:hover
 {
 	border-bottom: 1px solid #CCCCCC;
 	color: #333333;
 	text-decoration: none;
-	/*background-color: #33FFFF;*/
+	/* background-color: #33FFFF; */
 	margin-bottom: -1px;
-}
+}*/
 
 
 /* @end */
 
 /* @group server_list */
+#server_list {
+}
 #server_list li{
 	height: 35px;
 	font-size: 15px;
@@ -222,18 +224,33 @@ li {
 	border-style: none;
 	background: transparent;
 	font-size: 12px;
+	height: 16px;
 }
 
 #server_list li ul {
 	height: 25px;
-	padding-left: 30px;
+	/*padding-left: 30px;*/
 }
 
-#server_list li li.btns {
-	display: inline;
+#server_list li ul ul.info {
+	background: transparent;
+	padding: 1px 1px 1px 16px;
+	margin: 0;
+	border-style: none;
+	color: #000;
+	width: 50%;
+}
+
+#server_list li div.btns {
 	position: relative;
 	float: right;
-	top: -10px;
+	top: -35px;
+}
+
+#server_list li ul div.name {
+	display: table;
+	padding: 0;
+	height: 15px;
 }
 
 #btn_manage {
@@ -244,6 +261,18 @@ li {
 #server_list li.managed {
 	border-width: 3px;
 	border-color: #7fd4fd;
+}
+
+#btn_novi_srv {
+	font-size: 16px;
+	padding: 5px;
+	background-color: #faff2d;
+	text-align: left;
+	display: inline-block;
+}
+.btn {
+	text-align: center;
+	border: 1px solid #d5d5d5;
 }
 /* @end */
 
@@ -287,11 +316,14 @@ li {
 
 .button
 {
+	background-color: orange;
 	background: url(/images/button.PNG);
-	border: 1px solid #6593CF;
+	border: 1px solid #a9a9a9;
 	margin: 0px;
 	padding: 3px;
 	font-size: 12px;
+	color: #424242;
+	text-decoration: none;
 }
 
 .notbutton
