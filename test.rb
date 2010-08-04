@@ -135,7 +135,7 @@ end
 get '/' do
   login_required
   # haml :index
-  # TODO: Home == Dashboard sa stats, srvs, news, ...
+  # TODO: Home: Dashboard sa stats, srvs, news, ...
   redirect '/servers'
 end
 
@@ -145,8 +145,7 @@ end
 
 get '/servers' do
   login_required
-  # X @servers = [{"name"=>"srv1",  "owner"=>"bkrsta", "status"=>0,  "size"=>20}]
-  @user = Coduser.find_by_email current_user.email
+  @user = Coduser.all :email=>current_user.email
 
   if admin?
     servers = Server.all
@@ -232,9 +231,9 @@ get %r{/manage/([\w]+)-([\w]+)\.json} do |owner, name|
 end
 
 get %r{/servers/start/([\w]+)-([\w]+)} do |owner, name|
-  # user = Coduser.find_by_email current_user.email
-  user = Coduser.find_by_username owner
-  server = user.servers.find_by_name name
+  # user = Coduser.all :email=>current_user.email
+  user = Coduser.all :username=>owner
+  server = user.servers.all :name=>name
 
   @output = `cd #{hosting_dir} && ./control #{owner}-#{name} start`
 
@@ -253,8 +252,8 @@ get %r{/servers/start/([\w]+)-([\w]+)} do |owner, name|
 end
 
 get %r{/servers/stop/([\w]+)-([\w]+)} do |owner, name|
-  user = Coduser.find_by_username owner
-  server = user.servers.find_by_name name
+  user = Coduser.all :username=>owner
+  server = user.servers.all :name=>name
 
   @output = `cd #{hosting_dir} && ./control #{owner}-#{name} stop`
 
@@ -273,8 +272,8 @@ get %r{/servers/stop/([\w]+)-([\w]+)} do |owner, name|
 end
 
 get %r{/servers/restart/([\w]+)-([\w]+)} do |owner, name|
-  user = Coduser.find_by_username owner
-  server = user.servers.find_by_name name
+  user = Coduser.all :username=>owner
+  server = user.servers.all :name=>name
 
   @output = `cd #{hosting_dir} && ./control #{owner}-#{name} restart`
 
@@ -313,11 +312,11 @@ post '/servers/new' do
 
   name, longname, enabled, owner, port = params[:name], params[:longname], params[:enabled], params[:owner], params[:port]
 
-  user = Coduser.find_by_username owner
+  user = Coduser.all :username=>owner
 
   if !name.empty? and !longname.empty? and !owner.empty? and valid_name? name
     server = Server.create :name => name, :longname => longname, :enabled => (enabled)?1:0
-    server.coduser = Coduser.find_by_username owner
+    server.coduser = Coduser.all :username=>owner
     server.coduser.save
 
     tmpfile = ("#{hosting_dir}/tmp/temp_input")
@@ -354,7 +353,7 @@ get '/servers.xml' do
   if current_user.admin?
     servers = Server.all
   else
-    user = Coduser.find_by_email current_user.email
+    user = Coduser.all :email=>current_user.email
   end
 
   servers ||= user.servers.all
