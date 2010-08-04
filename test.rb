@@ -222,7 +222,7 @@ get %r{/manage/([\w]+)-([\w]+)\.json} do |owner, name|
   end
 end
 
-get %r{/start/([\w]+)-([\w]+)} do |owner, name|
+get %r{/servers/start/([\w]+)-([\w]+)} do |owner, name|
   # user = Coduser.find_by_email current_user.email
   user = Coduser.find_by_username owner
   server = user.servers.find_by_name name
@@ -243,7 +243,7 @@ get %r{/start/([\w]+)-([\w]+)} do |owner, name|
   redirect '/servers'
 end
 
-get %r{/stop/([\w]+)-([\w]+)} do |owner, name|
+get %r{/servers/stop/([\w]+)-([\w]+)} do |owner, name|
   user = Coduser.find_by_username owner
   server = user.servers.find_by_name name
 
