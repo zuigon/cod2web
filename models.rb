@@ -52,3 +52,10 @@ class Statistic
 
   belongs_to :server
 end
+
+
+class MmUser
+  include MongoMapper::Document
+  key :name, String
+end
+
