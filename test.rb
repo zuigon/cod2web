@@ -562,7 +562,7 @@ __END__
     - del_db = @servers_db - @servers_disk
     - if !del_db.empty?
       %h2 Za obrisati iz baze:
-      - for s in del_in_db
+      - for s in del_db
         %li
           %input(type='checkbox' name="del_db" value=s checked='no')
           = s[0]
