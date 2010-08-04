@@ -204,6 +204,12 @@ get '/servers/sync' do
   haml :servers_sync
 end
 
+post '/servers/sync' do
+  
+  del_db
+end
+
+
 get %r{/manage/([\w]+)-([\w]+)\.json} do |owner, name|
   # login_required
   # TODO: /manage .json
@@ -373,7 +379,6 @@ get '/servers.xml' do
     end
   end
 end
-
 
 # - textarea za logove
 # echo "<br /><center><textarea name='logarea' id='logarea' cols='100' rows='30' readonly='readonly'>";
