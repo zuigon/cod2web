@@ -127,6 +127,14 @@ helpers do
   def valid_name?(name)
     !%w(new list sync add).include? name and name.length >= 3 and name =~ /[a-zA-Z0-9_]/
   end
+  def reqadmin
+    login_required
+    if !admin?
+      throw(:halt, [404, haml(:error404, :layout=>false)])
+    end
+  end
+
+
 end
 
 get '/' do
@@ -600,3 +608,6 @@ __END__
             %option= port
     %li
       %input(type='submit' name="btn_create" value='Create!')
+
+@@error404
+404 ...
