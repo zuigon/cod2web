@@ -111,10 +111,7 @@ helpers do
     return raw
   end
   def admin?()
-    if !current_user.nil?
-      return current_user.admin?
-    end
-    false
+    !current_user.nil? && current_user.admin?
   end
   def manage_server()
     request.cookies["manage_server"]
