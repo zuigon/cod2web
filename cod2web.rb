@@ -72,20 +72,6 @@ end
 
 # layout :layout
 
-before do
-  if logged_in?
-    @user = Coduser.find_by_email current_user.email
-    if @user.nil?
-      # halt 404, "Trenutni user nije u Coduser"
-      puts " Trenutni User nije u Coduser!"
-      c = current_user
-      user = Coduser.new :username=>c.email.split('@')[0], :name=>c.name, :email=>c.email
-      user.save
-      puts " dodao sam ga u Coduser -- #{user.username}, #{user.name}, #{user.email}"
-    end
-  end
-end
-
 helpers do
   def partial(name, options = {})
     item_name = name.to_sym
@@ -147,6 +133,30 @@ helpers do
     login_required
     if !admin?
       halt 404, haml(:error404, :layout=>false)
+    end
+  end
+  def logged_in?
+    !current_user.nil? and current_user.email
+    # FIXME: Ne smije biti! (privremeno)
+    # FIXME: User email mora biti unique!
+  end
+end
+
+before do
+  if logged_in? and current_user.email
+    @user = Coduser.find_by_email current_user.email
+    if @user.nil?
+      # halt 404, "Trenutni user nije u Coduser"
+      puts " Trenutni User nije u Coduser!"
+      c = current_user
+      user = Coduser.new :username=>c.email.split('@')[0], :name=>c.name, :email=>c.email
+      user.save
+      puts " dodao sam ga u Coduser -- #{user.username}, #{user.name}, #{user.email}"
+    end
+  else
+    c = request.cookies["manage_server"]
+    if !c.nil? && c!="NONE"
+      response.set_cookie "manage_server", nil
     end
   end
 end
