@@ -139,7 +139,7 @@ describe 'Models' do
             it "dodaj longname" do
               @user_srv.longname = "Test server 1"
               @user_srv.should_not be_valid
-            end˘
+            end
             it "dodaj enabled" do
               @user_srv.enabled = 0
               @user_srv.should be_valid
