@@ -1,8 +1,4 @@
-def bm(text, &block)
-  b = Time.now
-  yield block
-  puts "[#{text}] #{Time.now-b} sec."
-end
+def bm(text, &block) b = Time.now; yield block; puts "[#{text}] #{Time.now-b} sec."; end
 
 require "rubygems"
 gem "activesupport", "= 2.3.8"
@@ -10,48 +6,62 @@ gem "haml", "= 3.0.15"
 # require "dm-core"
 # require 'dm-migrations'
 # require "dm-mysql-adapter"
-%w(sinatra mongo_mapper digest/md5 digest/sha1 rack-flash sinatra-authentication models memcache).each do |r|
+%w(sinatra sinatra/config_file mongo_mapper digest/md5 digest/sha1 rack-flash sinatra-authentication memcache).each do |r|
   # bm r do
   require r
   # end
 end
 # require 'sinatra_more/markup_plugin'
-# require "sinatra/reloader" if development?
+configure :development do
+  require "sinatra/reloader"
+  # register Sinatra::Reloader
+end
+
+configure do
+  @config = YAML::load(File.read('config/config.yml'))[Sinatra::Application.environment.to_s]
+
+  @db_host = @config["database"]["host"]
+  @db_name = @config["database"]["name"]
+
+  @mc_host = @config["memcached"]["host"]
+  @mc_port = @config["memcached"]["port"] || '11211'
+
+  set :app_file, __FILE__
+  set :root, File.dirname( __FILE__ )
+  # set :public, File.dirname( __FILE__ ) + '/public' 
+  use Rack::Static, :urls => ["/css", "/images", "/js"], :root => "public"
+  use Rack::Session::Cookie, :secret => 'hstuw nent ywet nywfn hatoh arst ywftyh'
+  use Rack::Flash
+
+  set :sinatra_authentication_view_path, Pathname(__FILE__).dirname.expand_path + "auth_views/"
+  set :views, File.dirname(__FILE__) + '/views'
+end
+
+require "models"
 
 def hosting_dir() "/Users/bkrsta/Projects/cod2man/hosting" end
 
-C = MemCache.new 'localhost:11211'
+C = MemCache.new "#{@mc_host}:#{@mc_port}"
 
 logger = Logger.new($stdout) # za sin-auth
-
-set :app_file, __FILE__
-set :root, File.dirname( __FILE__ )
-# set :public, File.dirname( __FILE__ ) + '/public' 
-use Rack::Static, :urls => ["/css", "/images", "/js"], :root => "public"
-use Rack::Session::Cookie, :secret => 'hstuw nent ywet nywfn hatoh arst ywftyh'
-use Rack::Flash
-
-set :sinatra_authentication_view_path, Pathname(__FILE__).dirname.expand_path + "auth_views/"
-
-set :views, File.dirname(__FILE__) + '/views'
 
 class S
   # helper za servere (prave)
 
   def self.start s
-    `cd #{hosting_dir} && ./control #{s} start`
+    (File.directory? "#{hosting_dir}/#{s}") ? `cd #{hosting_dir} && ./control #{s} start` : false
   end
 
   def self.stop s
-    `cd #{hosting_dir} && ./control #{s} stop`
+    (File.directory? "#{hosting_dir}/#{s}") ? `cd #{hosting_dir} && ./control #{s} stop` : false
   end
 
   def self.restart s
-    `cd #{hosting_dir} && ./control #{s} restart`
+    (File.directory? "#{hosting_dir}/#{s}") ? `cd #{hosting_dir} && ./control #{s} restart` : false
   end
 
   def self.status s
-    `cd #{hosting_dir} && ./control #{s} status`
+    (File.directory? "#{hosting_dir}/#{s}") ? `cd #{hosting_dir} && ./control #{s} status` : false
   end
 
   def self.no_running user
@@ -90,7 +100,9 @@ helpers do
       haml "_#{name}".to_sym, options.merge(:layout => false)
     end
   end
-  def site_title() "cod2web" end
+  def site_title()
+    "cod2web"
+  end
   def running_os
     raw = `uname`.chop
     if raw =~ /Darwin/
@@ -104,7 +116,9 @@ helpers do
     end
     false
   end
-  def manage_server() request.cookies["manage_server"] end
+  def manage_server()
+    request.cookies["manage_server"]
+  end
   def managing?()
     !request.cookies["manage_server"].nil? && request.cookies["manage_server"] != "NONE" && !request.cookies["manage_server"].empty?
   end

@@ -1,5 +1,16 @@
-MongoMapper.connection = Mongo::Connection.new('localhost')
-MongoMapper.database = 'cod2web_dev'
+# configure :development do
+#   @db_host = 'localhost'
+#   @db_name  = 'cod2web_dev'
+# end 
+# 
+# configure :test do
+#   @db_host = 'localhost'
+#   @db_name  = 'cod2web_test'
+# end 
+
+
+MongoMapper.connection = Mongo::Connection.new(@db_host)
+MongoMapper.database = @db_name
 
 class Coduser
   include MongoMapper::Document
@@ -8,6 +19,8 @@ class Coduser
   key :password,    String #, :required => true
   key :email,       String, :required => true
   timestamps!
+
+  validates_format_of :email, :with => /^[\w\d]+\@[\w\d]+\.[\w\d]+$/
 
   many :servers
 end
@@ -29,6 +42,10 @@ class Server
     when -1: "unknown"
     else "err"
     end
+  end
+
+  def real_status
+    (S.status("#{self.coduser.username}") =~ /is running with PID of ( )*\d/) ? true : false
   end
 end
 
