@@ -1,5 +1,6 @@
 require "rubygems"
 require 'rack/test'
+gem 'webrat', '= 0.5.0'
 require "webrat"
 module AppHelper; def app() Sinatra::Application end end
 
