@@ -1,0 +1,26 @@
+/ %li{:class => srv['status']}
+- ovajm = manage_server=="#{srv['owner']}-#{srv['name']}"
+%li{:class => srv['status'] + (ovajm ? " managed" : "")}
+  %ul
+    %div.name
+      = srv['longname']
+    %ul.info
+      - if admin?
+        %li= "owner: " + link_to(srv['owner'], "/users/"+srv['owner'].to_s)
+      %li
+        = "shortname: #{srv['name']}"
+      %li
+        = "status: #{srv['status']}"
+      %li
+        = "size: #{srv['size']}"
+    %div{:class => 'btns'}
+      - if ovajm
+        - if srv['enabled'] == 1
+          %a{:href=>"/servers/stop/#{srv['owner']}-#{srv['name']}", :id=>'btn_stop', :class=>'btn'} Stop
+          %a{:href=>"/servers/restart/#{srv['owner']}-#{srv['name']}", :id=>'btn_restart', :class=>'btn'} Restart
+        - if srv['enabled'] == 0
+          %a{:href=>"/servers/start/#{srv['owner']}-#{srv['name']}", :id=>'btn_start', :class=>'btn'} Start
+        %a{:href=>"/servers/del/#{srv['owner']}-#{srv['name']}", :onclick => "return confirmation('Are you sure? All data and configuration will be deleted!')", :id=>'btn_delete', :class=>'btn'} Delete
+        %a{:href=>"#", :onclick => "srv_manage('none')", :id=>'btn_stop', :class=>'btn'} Close
+      - else
+        %a{:href=>"#", :onclick => "srv_manage('#{srv['owner']}-#{srv['name']}')", :id=>'btn_manage', :class=>'btn'} Manage

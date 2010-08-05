@@ -1,0 +1,32 @@
+%form(action='/servers/sync' method='POST')
+  %ul.servers_sync
+    %p
+      %h2 DB servers:
+    - for s in @servers_db
+      %li
+        = s[0]
+        %b= s[1]
+    %p
+      %h2 disk servers:
+    - for s in @servers_disk
+      %li
+        = s[0]
+        %b= s[1]
+    - za_db = @servers_disk - @servers_db
+    - if za_db != []
+      %p
+        %h2 U bazi nedostaju:
+        - for s in za_db
+          %li
+            %input(type='checkbox' name="to_db[]" value="#{s[0]}" checked='yes')
+            = s[0]
+            %b= s[1]
+    - del_db = @servers_db - @servers_disk
+    - if !del_db.empty?
+      %h2 Za obrisati iz baze:
+      - for s in del_db
+        %li
+          %input(type='checkbox' name="del_db[]" value="#{s[0]}" checked='no')
+          = s[0]
+          %b= s[1]
+    %input(type='submit' name="btn_sync" value='Sync!' onclick='return confirm("Are you sure?");' class='button')

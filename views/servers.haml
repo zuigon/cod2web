@@ -1,0 +1,15 @@
+- if flash[:error]
+  %p.notice= flash[:error]
+- if flash[:notice]
+  %p.notice= flash[:notice]
+- if !@servers.empty?
+  %ul#server_list
+    - for srv in @servers
+      = partial("server", :locals => {:srv=>srv})
+- else
+  %li
+    - if admin?
+      There are currently no servers on this host.
+    - else
+      There are currently no servers managed by you.
+%a{:href=>"/servers/new", :onclick => "srv_novi()", :id=>'btn_novi_srv', :class=>'button'} New server

@@ -1,0 +1,14 @@
+- if logged_in?
+  = "Logged in, #{current_user.email}"
+  %p= manage_server
+  %p= request.cookies["manage_server"]
+- else
+  = "Not logged in ..."
+  %a{:href=>"/"}
+    Login
+%ul
+  - response.set_cookie("manage_server", "bkrsta-srv1")
+  - for c in request.cookies
+    %li
+      %p= c[0]
+      %p= c[1]

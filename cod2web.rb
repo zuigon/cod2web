@@ -456,223 +456,28 @@ end
 
 __END__
 
-@@layout
-!!! Transitional
-%html{:xmlns => "http://www.w3.org/1999/xhtml"}
-  %head
-    %meta{:content => "text/html; charset=iso-8859-1", "http-equiv" => "Content-Type"}/
-    %title= site_title
-    %link{:href => "/css/main.css", :rel => "stylesheet", :type => "text/css"}/
-    %link{:href => "/css/style.css", :rel => "stylesheet", :type => "text/css"}/
-    %script{:src => "http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js", :type => "text/javascript"}
-    %script{:src => "http://plugins.jquery.com/files/jquery.cookie.js.txt", :type => "text/javascript"}
-    %script{:src => "/js/main.js", :type => "text/javascript"}
-  %body
-    %div{:align => "center"}
-      #container
-        %div{:align => "left"}
-          #headerimg
-            #header2
-              .title3= site_title
-          #navagain
-            #navbar
-              - if logged_in?
-                = partial "navbar_all"
-              - if admin?
-                = partial "navbar_admin"
-              - if managing?
-                - if admin?
-                  = partial "navbar_admin_manage"
-                = partial "navbar_manage"
-              - if logged_in?
-                %a{:href => "/logout"}
-                  Logout
-          #stuff
-            #content
-              :css
-                img * { border: 0px; background-color: #FFFFFF; text-decoration: none; }
-              = yield
-          #footer
-            = partial "footer"
-
-@@_footer
-%div{:align => "center"}
-  OS: #{running_os} | Ruby: #{RUBY_VERSION} | Sinatra: #{Sinatra::VERSION} | CoD2: 1.3 | #{"Running servers: #{running_servers}" if logged_in?}
-
-@@login_old
-%form{:action => "/login", :method => "post", :name => "form1"}
-  %div{:align => "center", :style => "font-family: 'Segoe UI', 'Verdana';"}
-    %br/
-    Login on: cod2web
-    %br/
-    %table{:border => "0", :cellpadding => "3", :cellspacing => "3", :width => "250"}
-      %tr
-        %td{:width => "136"} Username:
-        %td{:width => "138"}
-          %input#username{:name => "username", :type => "text"}/
-      %tr
-        %td{:width => "136"} Password:
-        %td{:width => "138"}
-          %input#password{:name => "password", :type => "password"}/
-      %tr
-        %td  
-        %td  
-      %tr
-        %td{:align => "center", :colspan => "2"}
-          %input#btnlogin{:name => "btnlogin", :type => "submit", :value => "Login"}/
-
-@@status
-- if logged_in?
-  = "Logged in, #{current_user.email}"
-  %p= manage_server
-  %p= request.cookies["manage_server"]
-- else
-  = "Not logged in ..."
-  %a{:href=>"/"}
-    Login
-%ul
-  - response.set_cookie("manage_server", "bkrsta-srv1")
-  - for c in request.cookies
-    %li
-      %p= c[0]
-      %p= c[1]
-
-@@_navbar_all
-%a{:href => "/"}
-  Home (servers)
-
-@@_navbar_admin
-%a{:href => '/servers/sync'}
-  +Sync servers
-%a{:href => '/users'}
-  +Users
-
-@@_navbar_admin_manage
-
-@@_navbar_manage
-%a{:href => "/srvlog"}
-  Server log
-%a{:href => "/mods"}
-  Mods (upload)
-%a{:href => "/config"}
-  Server Config Editor
-%a{:href => "/stats"}
-  Server Stats
-%a{:href => "/rcon"}
-  RCON
-
-@@servers
-- if flash[:error]
-  %p.notice= flash[:error]
-- if flash[:notice]
-  %p.notice= flash[:notice]
-- if !@servers.empty?
-  %ul#server_list
-    - for srv in @servers
-      = partial("server", :locals => {:srv=>srv})
-- else
-  %li
-    - if admin?
-      There are currently no servers on this host.
-    - else
-      There are currently no servers managed by you.
-%a{:href=>"/servers/new", :onclick => "srv_novi()", :id=>'btn_novi_srv', :class=>'button'} New server
-
-@@_server
-/ %li{:class => srv['status']}
-- ovajm = manage_server=="#{srv['owner']}-#{srv['name']}"
-%li{:class => srv['status'] + (ovajm ? " managed" : "")}
-  %ul
-    %div.name
-      = srv['longname']
-    %ul.info
-      - if admin?
-        %li= "owner: " + link_to(srv['owner'], "/users/"+srv['owner'].to_s)
-      %li
-        = "shortname: #{srv['name']}"
-      %li
-        = "status: #{srv['status']}"
-      %li
-        = "size: #{srv['size']}"
-    %div{:class => 'btns'}
-      - if ovajm
-        - if srv['enabled'] == 1
-          %a{:href=>"/servers/stop/#{srv['owner']}-#{srv['name']}", :id=>'btn_stop', :class=>'btn'} Stop
-          %a{:href=>"/servers/restart/#{srv['owner']}-#{srv['name']}", :id=>'btn_restart', :class=>'btn'} Restart
-        - if srv['enabled'] == 0
-          %a{:href=>"/servers/start/#{srv['owner']}-#{srv['name']}", :id=>'btn_start', :class=>'btn'} Start
-        %a{:href=>"/servers/del/#{srv['owner']}-#{srv['name']}", :onclick => "return confirmation('Are you sure? All data and configuration will be deleted!')", :id=>'btn_delete', :class=>'btn'} Delete
-        %a{:href=>"#", :onclick => "srv_manage('none')", :id=>'btn_stop', :class=>'btn'} Close
-      - else
-        %a{:href=>"#", :onclick => "srv_manage('#{srv['owner']}-#{srv['name']}')", :id=>'btn_manage', :class=>'btn'} Manage
-
-@@servers_sync
-%form(action='/servers/sync' method='POST')
-  %ul.servers_sync
-    %p
-      %h2 DB servers:
-    - for s in @servers_db
-      %li
-        = s[0]
-        %b= s[1]
-    %p
-      %h2 disk servers:
-    - for s in @servers_disk
-      %li
-        = s[0]
-        %b= s[1]
-    - za_db = @servers_disk - @servers_db
-    - if za_db != []
-      %p
-        %h2 U bazi nedostaju:
-        - for s in za_db
-          %li
-            %input(type='checkbox' name="to_db[]" value="#{s[0]}" checked='yes')
-            = s[0]
-            %b= s[1]
-    - del_db = @servers_db - @servers_disk
-    - if !del_db.empty?
-      %h2 Za obrisati iz baze:
-      - for s in del_db
-        %li
-          %input(type='checkbox' name="del_db[]" value="#{s[0]}" checked='no')
-          = s[0]
-          %b= s[1]
-    %input(type='submit' name="btn_sync" value='Sync!' onclick='return confirm("Are you sure?");' class='button')
-
-@@new_srv
-%form(action='/servers/new' method='POST')
-  :css
-    ul.new_srv li p.input { left: 100px; }
-  %ul.new_srv
-    %li
-      Name:
-      %p.input
-        %input{"type"=>'text', "name"=>"name", "value"=>@data['name']}
-    %li
-      Longname:
-      %p.input
-        %input{"type"=>'text', "name"=>"longname", "value"=>@data['longname']}
-    %li
-      Enabled:
-      %p.input
-        %input{"type"=>'checkbox', "name"=>"enabled", "value"=>'enabled', "checked"=>'no'}
-    - if admin?
-      %li
-        Owner:
-        %p.input
-          %select{:name => "owner"}
-            - for owner in @owners
-              %option{ :selected => owner == @data['owner']}= owner
-    %li
-      Port:
-      %p.input
-        %select{:name => "port"}
-          - for port in @data['ports']
-            %option= port
-    %li
-      %input(type='submit' name="btn_create" value='Create!' class='button')
-
-@@error404
-  %p.error
-    Not found!
+# @@layout
+# 
+# @@_footer
+# 
+# @@login_old
+# 
+# @@status
+# 
+# @@_navbar_all
+# 
+# @@_navbar_admin
+# 
+# @@_navbar_admin_manage
+# 
+# @@_navbar_manage
+# 
+# @@servers
+# 
+# @@_server
+# 
+# @@servers_sync
+# 
+# @@new_srv
+# 
+# @@error404

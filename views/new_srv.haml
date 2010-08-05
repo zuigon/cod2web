@@ -1,0 +1,31 @@
+%form(action='/servers/new' method='POST')
+  :css
+    ul.new_srv li p.input { left: 100px; }
+  %ul.new_srv
+    %li
+      Name:
+      %p.input
+        %input{"type"=>'text', "name"=>"name", "value"=>@data['name']}
+    %li
+      Longname:
+      %p.input
+        %input{"type"=>'text', "name"=>"longname", "value"=>@data['longname']}
+    %li
+      Enabled:
+      %p.input
+        %input{"type"=>'checkbox', "name"=>"enabled", "value"=>'enabled', "checked"=>'no'}
+    - if admin?
+      %li
+        Owner:
+        %p.input
+          %select{:name => "owner"}
+            - for owner in @owners
+              %option{ :selected => owner == @data['owner']}= owner
+    %li
+      Port:
+      %p.input
+        %select{:name => "port"}
+          - for port in @data['ports']
+            %option= port
+    %li
+      %input(type='submit' name="btn_create" value='Create!' class='button')

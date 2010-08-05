@@ -1,0 +1,20 @@
+%form{:action => "/login", :method => "post", :name => "form1"}
+  %div{:align => "center", :style => "font-family: 'Segoe UI', 'Verdana';"}
+    %br/
+    Login on: cod2web
+    %br/
+    %table{:border => "0", :cellpadding => "3", :cellspacing => "3", :width => "250"}
+      %tr
+        %td{:width => "136"} Username:
+        %td{:width => "138"}
+          %input#username{:name => "username", :type => "text"}/
+      %tr
+        %td{:width => "136"} Password:
+        %td{:width => "138"}
+          %input#password{:name => "password", :type => "password"}/
+      %tr
+        %td  
+        %td  
+      %tr
+        %td{:align => "center", :colspan => "2"}
+          %input#btnlogin{:name => "btnlogin", :type => "submit", :value => "Login"}/
