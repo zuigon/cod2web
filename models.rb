@@ -4,8 +4,8 @@ MongoMapper.database = 'cod2web_dev'
 class Coduser
   include MongoMapper::Document
   key :name,        String
-  key :username,    String, :required => true
-  key :password,    String, :required => true
+  key :username,    String #, :required => true
+  key :password,    String #, :required => true
   key :email,       String, :required => true
   timestamps!
 

@@ -1,22 +1,26 @@
+def bm(text, &block)
+  b = Time.now
+  yield block
+  puts "[#{text}] #{Time.now-b} sec."
+end
+
 require "rubygems"
 gem "activesupport", "= 2.3.8"
-require "sinatra"
 gem "haml", "= 3.0.15"
 # require "dm-core"
 # require 'dm-migrations'
 # require "dm-mysql-adapter"
-require "mongo_mapper"
-require 'digest/md5'
-require 'digest/sha1'
-require 'rack-flash'
-require "sinatra-authentication"
-require "models"
+%w(sinatra mongo_mapper digest/md5 digest/sha1 rack-flash sinatra-authentication models memcache).each do |r|
+  # bm r do
+  require r
+  # end
+end
 # require 'sinatra_more/markup_plugin'
 # require "sinatra/reloader" if development?
 
-def hosting_dir
-  "/Users/bkrsta/Projects/cod2man/hosting"
-end
+def hosting_dir() "/Users/bkrsta/Projects/cod2man/hosting" end
+
+C = MemCache.new 'localhost:11211'
 
 logger = Logger.new($stdout) # za sin-auth
 
@@ -50,18 +54,24 @@ class S
     `cd #{hosting_dir} && ./control #{s} status`
   end
 
+  def self.no_running user
+    
+  end
+
 end
 
 # layout :layout
 
 before do
   if logged_in?
-    if (@user = Coduser.all :email=>current_user.email) == nil
-      halt 404, "Trenutni user nije u Coduser"
-    else
+    @user = Coduser.find_by_email current_user.email
+    if @user.nil?
+      # halt 404, "Trenutni user nije u Coduser"
       puts " Trenutni User nije u Coduser!"
-      # user = Coduser.new :name=>
-      puts " dodao sam ga u Coduser"
+      c = current_user
+      user = Coduser.new :username=>c.email.split('@')[0], :name=>c.name, :email=>c.email
+      user.save
+      puts " dodao sam ga u Coduser -- #{user.username}, #{user.name}, #{user.email}"
     end
   end
 end
@@ -112,16 +122,15 @@ helpers do
     end
   end
   def running_servers
-    x=Server.count(:enabled=>1); "#{x} (enabled)"
-    # ((!x.nil?) ? x : 0 ).to_s + " (enabled)"
-  end
-  def bm(text, &block)
-    b = Time.now
-    yield block
-    puts "[#{text}] #{Time.now-b} sec."
+    if admin?
+      x=Server.count(:enabled=>1) || 0
+    else
+      x=@user.servers.count(:enabled=>1) || 0
+    end
+    "#{x}"
   end
   def valid_name?(name)
-    !%w(new list sync add).include? name and name.length >= 3 and name =~ /[a-zA-Z0-9_]/
+    !%w(new list sync add del).include? name and name.length >= 3 and name =~ /[a-zA-Z0-9_]/
   end
   def reqadmin
     login_required
@@ -144,7 +153,7 @@ end
 
 get '/servers' do
   login_required
-  @user = Coduser.all :email=>current_user.email
+  @user = Coduser.find_by_email current_user.email
 
   if admin?
     servers = Server.all
@@ -210,7 +219,7 @@ post '/servers/sync' do
   @del_db.each do |s|
     # if name =~ /./ and owner =~ /./
       owner, name = s.split '-'
-      server = Server.all :name=>name
+      server = Server.find_by_name name
       if !server.nil?
         if owner.empty?
           server.srvinfo.delete
@@ -229,7 +238,6 @@ post '/servers/sync' do
   # TODO: implem. /servers/sync add to db
 
 end
-
 
 get %r{/manage/([\w]+)-([\w]+)\.json} do |owner, name|
   # login_required
@@ -250,9 +258,9 @@ get %r{/manage/([\w]+)-([\w]+)\.json} do |owner, name|
 end
 
 get %r{/servers/start/([\w]+)-([\w]+)} do |owner, name|
-  # user = Coduser.all :email=>current_user.email
-  user = Coduser.all :username=>owner
-  server = user.servers.all :name=>name
+  # user = Coduser.find_by_email current_user.email
+  user = Coduser.find_by_username owner
+  server = user.servers.find_by_name name
 
   @output = S.start "#{owner}-#{name}"
 
@@ -271,8 +279,8 @@ get %r{/servers/start/([\w]+)-([\w]+)} do |owner, name|
 end
 
 get %r{/servers/stop/([\w]+)-([\w]+)} do |owner, name|
-  user = Coduser.all :username=>owner
-  server = user.servers.all :name=>name
+  user = Coduser.find_by_username owner
+  server = user.servers.find_by_name name
 
   @output = S.start "#{owner}-#{name}"
 
@@ -291,8 +299,8 @@ get %r{/servers/stop/([\w]+)-([\w]+)} do |owner, name|
 end
 
 get %r{/servers/restart/([\w]+)-([\w]+)} do |owner, name|
-  user = Coduser.all :username=>owner
-  server = user.servers.all :name=>name
+  user = Coduser.find_by_username owner
+  server = user.servers.find_by_name name
 
   @output = S.restart "#{owner}-#{name}"
 
@@ -322,8 +330,8 @@ get '/servers/new' do
   # forma za cr. srv-a
   # ime ne smije biti new ili sync
 
-  @owners = Coduser.all.collect {|x| x.name }
-  @data = {"name"=>"newsrv1", "longname"=>"New srv 1", "owner"=>"bkrsta", "ports"=>[28962,28963,28964,28965,28966]}
+  @owners = Coduser.all.collect {|x| x.username }
+  @data = {"name"=>"novisrv", "longname"=>"Novi Server", "owner"=>@user.username, "ports"=>[28962,28963,28964,28965,28966]}
   haml :new_srv
 end
 
@@ -331,11 +339,15 @@ post '/servers/new' do
 
   name, longname, enabled, owner, port = params[:name], params[:longname], params[:enabled], params[:owner], params[:port]
 
-  user = Coduser.all :username=>owner
+  if !admin?
+    owner = @user.username
+  end
+
+  user = Coduser.find_by_username owner
 
   if !name.empty? and !longname.empty? and !owner.empty? and valid_name? name
     server = Server.create :name => name, :longname => longname, :enabled => (enabled)?1:0
-    server.coduser = Coduser.all :username=>owner
+    server.coduser = Coduser.find_by_username owner
     server.coduser.save
 
     tmpfile = ("#{hosting_dir}/tmp/temp_input")
@@ -363,6 +375,23 @@ post '/servers/new' do
   end
 end
 
+get %r{/servers/del/([\w]+)?-([\w]+)} do |owner, name|
+  login_required
+
+  @srv = Server.find_by_name name
+  if @srv.nil?
+    flash[:error] = "Error: server not exists! Or DB error..."
+  else
+    if @srv.coduser.email == current_user.email or admin?
+      @srv.delete
+      flash[:notice] = "Server '#{name}' deleted"
+    else
+      flash[:error] = "Error"
+    end
+  end
+  redirect '/'
+end
+
 get '/status' do
   haml :status
 end
@@ -372,7 +401,7 @@ get '/servers.xml' do
   if current_user.admin?
     servers = Server.all
   else
-    user = Coduser.all :email=>current_user.email
+    user = Coduser.find_by_email current_user.email
   end
 
   servers ||= user.servers.all
@@ -454,7 +483,7 @@ __END__
 
 @@_footer
 %div{:align => "center"}
-  OS: #{running_os} | Ruby: #{RUBY_VERSION} | Sinatra: #{Sinatra::VERSION} | CoD2: 1.3 | Running servers: #{running_servers}
+  OS: #{running_os} | Ruby: #{RUBY_VERSION} | Sinatra: #{Sinatra::VERSION} | CoD2: 1.3 | #{"Running servers: #{running_servers}" if logged_in?}
 
 @@login_old
 %form{:action => "/login", :method => "post", :name => "form1"}
@@ -499,8 +528,10 @@ __END__
   Home (servers)
 
 @@_navbar_admin
-%a{:href => '/servers/sync', :alt => "Sinkroniziranje pravih servera s bazom"}
+%a{:href => '/servers/sync'}
   +Sync servers
+%a{:href => '/users'}
+  +Users
 
 @@_navbar_admin_manage
 
@@ -527,7 +558,10 @@ __END__
       = partial("server", :locals => {:srv=>srv})
 - else
   %li
-    There are currently no servers managed by you.
+    - if admin?
+      There are currently no servers on this host.
+    - else
+      There are currently no servers managed by you.
 %a{:href=>"/servers/new", :onclick => "srv_novi()", :id=>'btn_novi_srv', :class=>'button'} New server
 
 @@_server
@@ -538,7 +572,7 @@ __END__
     %div.name
       = srv['longname']
     %ul.info
-      - if admin? or 1
+      - if admin?
         %li= "owner: " + link_to(srv['owner'], "/users/"+srv['owner'].to_s)
       %li
         = "shortname: #{srv['name']}"
@@ -549,16 +583,14 @@ __END__
     %div{:class => 'btns'}
       - if ovajm
         - if srv['enabled'] == 1
-          / %a{:href=>"#", :onclick => "srv_stop('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Stop
-          %a{:href=>"/servers/stop", :id=>'btn_manage', :class=>'button'} Stop
-          / %a{:href=>"#", :onclick => "srv_restart('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Restart
-          %a{:href=>"/servers/restart", :id=>'btn_manage', :class=>'button'} Restart
+          %a{:href=>"/servers/stop/#{srv['owner']}-#{srv['name']}", :id=>'btn_stop', :class=>'btn'} Stop
+          %a{:href=>"/servers/restart/#{srv['owner']}-#{srv['name']}", :id=>'btn_restart', :class=>'btn'} Restart
         - if srv['enabled'] == 0
-          / %a{:href=>"#", :onclick => "srv_start('#{srv["shortname"]}')", :id=>'btn_manage', :class=>'button'} Start
-          %a{:href=>"/servers/restart", :id=>'btn_manage', :class=>'button'} Start
-        %a{:href=>"#", :onclick => "srv_manage('none')", :id=>'btn_manage', :class=>'button'} Close
+          %a{:href=>"/servers/start/#{srv['owner']}-#{srv['name']}", :id=>'btn_start', :class=>'btn'} Start
+        %a{:href=>"/servers/del/#{srv['owner']}-#{srv['name']}", :onclick => "return confirmation('Are you sure? All data and configuration will be deleted!')", :id=>'btn_delete', :class=>'btn'} Delete
+        %a{:href=>"#", :onclick => "srv_manage('none')", :id=>'btn_stop', :class=>'btn'} Close
       - else
-        %a{:href=>"#", :onclick => "srv_manage('#{srv['owner']}-#{srv['name']}')", :id=>'btn_manage', :class=>'button'} Manage
+        %a{:href=>"#", :onclick => "srv_manage('#{srv['owner']}-#{srv['name']}')", :id=>'btn_manage', :class=>'btn'} Manage
 
 @@servers_sync
 %form(action='/servers/sync' method='POST')
@@ -611,12 +643,13 @@ __END__
       Enabled:
       %p.input
         %input{"type"=>'checkbox', "name"=>"enabled", "value"=>'enabled', "checked"=>'no'}
-    %li
-      Owner:
-      %p.input
-        %select{:name => "owner"}
-          - for owner in @owners
-            %option{ :selected => owner == @data['owner']}= owner
+    - if admin?
+      %li
+        Owner:
+        %p.input
+          %select{:name => "owner"}
+            - for owner in @owners
+              %option{ :selected => owner == @data['owner']}= owner
     %li
       Port:
       %p.input
@@ -624,7 +657,7 @@ __END__
           - for port in @data['ports']
             %option= port
     %li
-      %input(type='submit' name="btn_create" value='Create!')
+      %input(type='submit' name="btn_create" value='Create!' class='button')
 
 @@error404
   %p.error
