@@ -3,6 +3,11 @@ require "sinatra"
 Sinatra::Application.set :environment, :test
 require File.dirname(__FILE__) + '/../../cod2web'
 
+# ??
+# Webrat.configure do |config|
+#   config.mode = :rack
+# end
+
 describe "App" do
   it "treba biti test" do
     app.environment.to_s.should == "test"

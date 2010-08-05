@@ -41,7 +41,7 @@ require "models"
 
 def hosting_dir() "/Users/bkrsta/Projects/cod2man/hosting" end
 
-C = MemCache.new "#{@mc_host}:#{@mc_port}"
+C = MemCache.new "#{@mc_host}:#{@mc_port}" # if C.nil?
 
 logger = Logger.new($stdout) # za sin-auth
 
