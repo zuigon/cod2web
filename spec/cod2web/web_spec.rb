@@ -162,6 +162,8 @@ describe "web" do
       uncheck 'enabled'
       select '28962'
       click_button 'Create!'
+      # response_body.should contain "Server 'testsrv' is created!"
+      # FIXME: template, flash, CSS za flash, image
     end
 
   end

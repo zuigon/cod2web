@@ -45,6 +45,7 @@ C = MemCache.new "#{@mc_host}:#{@mc_port}" # if C.nil?
 
 logger = Logger.new($stdout) # za sin-auth
 
+# TODO: prebaciti logiku o start/stop/restart/status u class C (iz /servers/start...)
 class S
   # helper za servere (prave)
 
