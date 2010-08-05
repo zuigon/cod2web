@@ -16,6 +16,23 @@ describe "App" do
       exit
     end
   end
+  it "hosting_dir ne smije biti prazan ili nepostojeci" do
+    # TODO: hosting_dir citaj iz config.yml-a, a za test env koristi git submodule, ...
+    File.directory?(hosting_dir).should be_true
+    if !File.directory? hosting_dir
+      exit
+    end
+  end
+  it "obrisi server ako postoji (na disku)" do
+    if File.exists?("#{hosting_dir}/test-testsrv/.cod2server")
+      if S.status('test-testsrv') =~ /is running with PID of/
+        S.stop('test-testsrv')
+      end
+      system "rm -rf #{hosting_dir}/test-testsrv/"
+    end
+    File.exists?("#{hosting_dir}/test-testsrv/.cod2server").should_not be_true
+    File.directory?("#{hosting_dir}/test-testsrv/").should_not be_true
+  end
 end
 
 module LoginHelper
@@ -164,6 +181,12 @@ describe "web" do
       click_button 'Create!'
       # response_body.should contain "Server 'testsrv' is created!"
       # FIXME: template, flash, CSS za flash, image
+    end
+
+    it "real server should exist in hosting dir" do
+      File.directory?("#{hosting_dir}/test-testsrv").should be_true
+      File.exists?("#{hosting_dir}/test-testsrv/.cod2server").should be_true
+      S.status('test-testsrv').should contain 'not running'
     end
 
   end
