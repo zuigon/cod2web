@@ -15,7 +15,7 @@ describe "App" do
 end
 
 describe 'Models' do
-  describe "MM" do
+  describe "MM baza" do
     before do
       @db = MongoMapper.database
       @conn = MongoMapper.connection
@@ -132,6 +132,9 @@ describe 'Models' do
             before :all do
               @user_srv = @user.servers.create
             end
+            after :all do
+              @user_srv.delete
+            end
             it "dodaj name" do
               @user_srv.name = "test 1"
               @user_srv.should_not be_valid
@@ -144,10 +147,6 @@ describe 'Models' do
               @user_srv.enabled = 0
               @user_srv.should be_valid
             end
-          end
-
-          after :all do
-            @user_srv.delete
           end
         end
 
@@ -169,8 +168,6 @@ describe 'Models' do
           end
           it "real_status" do
             @user_srv.real_status.should be_false
-            puts @user_srv.name
-            puts @user_srv.coduser.username
           end
           after :each do
             @user_srv.delete
@@ -182,7 +179,7 @@ describe 'Models' do
   end
 end
 
-describe MmUser do
+describe MmUser, "auth baza" do
   it "treba biti prazna" do
     MmUser.all.should == []
   end
@@ -208,7 +205,5 @@ describe MmUser do
     @mmusr.delete
     MmUser.delete_all
   end
-
-end
 
 end
