@@ -11,7 +11,7 @@ namespace :spec do
   Spec::Rake::SpecTask.new(:select) do |t|
     # t.libs << "lib"
     t.spec_files = [ENV["SPEC"]]
-    t.spec_opts = ["--color", "--format", "specdoc", "--require", "spec/spec_helper.rb"]
+    t.spec_opts = %w(--color --format progress --require spec/spec_helper.rb --reverse)
   end
 end
 
